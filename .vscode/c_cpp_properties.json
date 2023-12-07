@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "h:/FLProg/ideV8/portable/sketchbook/libraries/Flprog_Ethernet/**",
+                "H:/FLProg/ideV8/hardware/arduino/avr/cores/arduino"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "mergeConfigurations": false,
+            "browse": {
+                "path": [
+                    "h:/FLProg/ideV8/portable/sketchbook/libraries/Flprog_Ethernet"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        }
+    ],
+    "version": 4
+}
