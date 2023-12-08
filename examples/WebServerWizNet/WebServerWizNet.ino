@@ -61,7 +61,7 @@ void setup()
     {
     }
 
-    flprog::printConsole(" Тест Modbus Slave TCP - WizNet ");
+    flprog::printConsole(" Тест WebServer - WizNet ");
 
     Serial.print("CS - ");
     Serial.println(WiznetInterface.pinCs());
@@ -114,8 +114,8 @@ void page_404()
     result += "<html>";
     result += "<h1>Page not found</h1>";
     result += "<br>";
-    result += sendWebServerData();
     webServer.print(result);
+    webServer.print(sendWebServerData());
     result = "<h4> SendTime - ";
     result += String(millis() - startSendTime);
     result += "</h4></html>";
@@ -124,15 +124,15 @@ void page_404()
 void mainPage()
 {
     startSendTime = millis();
-    String result = sendHeader();
-    result += "<h1>MainPage</h1>";
+    webServer.print(sendHeader());
+    String result = "<h1>MainPage</h1>";
     result += "<br>";
     result += "<a href=\"/test1\">Test page 1</a>";
     result += "<br>";
     result += "<a href=\"/test2?value1=10&value2=blabla&value3=12345678\">Test page 2</a>";
     result += "<br>";
-    result += sendWebServerData();
     webServer.print(result);
+    webServer.print(sendWebServerData());
     result = "<h4> SendTime - ";
     result += String(millis() - startSendTime);
     result += "</h4></html>";
@@ -142,14 +142,14 @@ void mainPage()
 void testPage1()
 {
     startSendTime = millis();
-    String result = sendHeader();
-    result += "<h1>Test Page 1</h1>";
+    webServer.print(sendHeader());
+    String result = "<h1>Test Page 1</h1>";
     result += "<br>";
     result += "<a href=\"/\">MainPage</a>";
     result += "<br>";
     result += "<a href=\"/test2?value1=10&value2=blabla&value3=12345678\">Test page 2</a>";
-    result += sendWebServerData();
     webServer.print(result);
+    webServer.print(sendWebServerData());
     result = "<h4> SendTime - ";
     result += String(millis() - startSendTime);
     result += "</h4></html>";
@@ -159,14 +159,14 @@ void testPage1()
 void testPage2()
 {
     startSendTime = millis();
-    String result = sendHeader();
-    result += "<h1>Test Page 2</h1>";
+    webServer.print(sendHeader());
+    String result = "<h1>Test Page 2</h1>";
     result += "<br>";
     result += " <a href = \"/\">MainPage</a>";
     result += "<br>";
     result += "<a href=\"/test1\">Test page 1</a>";
-    result += sendWebServerData();
     webServer.print(result);
+    webServer.print(sendWebServerData());
     result = "<h4> SendTime - ";
     result += String(millis() - startSendTime);
     result += "</h4></html>";

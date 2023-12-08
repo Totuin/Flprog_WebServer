@@ -61,7 +61,7 @@ void setup()
     {
     }
 
-    flprog::printConsole(" Тест Modbus Slave TCP - WizNet ");
+    flprog::printConsole(" Тест Modbus Web Server RP2040 на два ядра - WizNet ");
 
     Serial.print("CS - ");
     Serial.println(WiznetInterface.pinCs());
