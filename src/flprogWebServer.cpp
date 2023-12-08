@@ -30,7 +30,6 @@ void FLProgWebServer::pool()
     {
         return;
     }
-    _reqest.headerKeysCount = 0;
     parseReqest();
 }
 
@@ -51,7 +50,7 @@ void FLProgWebServer::parseReqest()
         {
             return;
         }
-        _reqest.reqest = _readingString;
+        _reqestString = _readingString;
         _readingString = "";
         _step = FLPROG_WEB_SERVER_READ_SECOND_LINE_STEP;
     }
@@ -68,27 +67,33 @@ void FLProgWebServer::parseReqest()
 
     if (_step == FLPROG_WEB_SERVER_WORK_DATA_STEP_1)
     {
-        int addr_start = _reqest.reqest.indexOf(' ');
-        int addr_end = _reqest.reqest.indexOf(' ', addr_start + 1);
-        _reqest.methodStr = _reqest.reqest.substring(0, addr_start);
-        _reqest.currentUri = _reqest.reqest.substring(addr_start + 1, addr_end);
-        _reqest.currentVersion = atoi((_reqest.reqest.substring(addr_end + 8)).c_str());
-        _reqest.searchStr = "";
+        int addr_start = _reqestString.indexOf(' ');
+        int addr_end = _reqestString.indexOf(' ', addr_start + 1);
+        _reqest.method = getHttpMethodCode(_reqestString.substring(0, addr_start));
+        _reqest.currentUri = _reqestString.substring(addr_start + 1, addr_end);
+        _reqest.currentVersion = atoi((_reqestString.substring(addr_end + 8)).c_str());
+        _searchStr = "";
         int hasSearch = _reqest.currentUri.indexOf('?');
         if (hasSearch != -1)
         {
-            _reqest.searchStr = _reqest.currentUri.substring(hasSearch + 1);
+            _searchStr = _reqest.currentUri.substring(hasSearch + 1);
             _reqest.currentUri = _reqest.currentUri.substring(0, hasSearch);
         }
         _reqest.chunked = false;
         _reqest.clientContentLength = 0;
         _readingString = "";
-        if (_reqest.methodStr == "POST" || _reqest.methodStr == "PUT" || _reqest.methodStr == "PATCH" || _reqest.methodStr == "DELETE")
+        if (_reqest.method == (FLPROG_WEB_SERVER_POST) || (_reqest.method == FLPROG_WEB_SERVER_PUT) || (_reqest.method == FLPROG_WEB_SERVER_PATCH) || (_reqest.method == FLPROG_WEB_SERVER_DELETE))
         {
             _step = FLPROG_WEB_SERVER_PARSE_POST_STEP_1;
         }
         else
         {
+
+            if (_reqest.headers)
+            {
+                delete[] _reqest.headers;
+            }
+            _reqest.headerKeysCount = 0;
             _step = FLPROG_WEB_SERVER_PARSE_GET_STEP_1;
         }
     }
@@ -119,16 +124,24 @@ void FLProgWebServer::parseReqest()
     _server.println("</html>");
     _server.stopConnection();
 
-    Serial.println(_reqest.reqest);
     Serial.println(_reqest.currentVersion);
     Serial.println(_reqest.currentUri);
-    Serial.println(_reqest.methodStr);
-    Serial.println(_reqest.searchStr);
+    Serial.println(_reqest.method);
+    Serial.println(_reqest.hostHeader);
+
     for (int i = 0; i < _reqest.headerKeysCount; i++)
     {
         Serial.print(_reqest.headers[i].key);
         Serial.print(" --- ");
-        Serial.print(_reqest.headers[i].value);
+        Serial.println(_reqest.headers[i].value);
+    }
+    Serial.println();
+
+    for (int i = 0; i < _reqest.currentArgCount; i++)
+    {
+        Serial.print(_reqest.currentArgs[i].key);
+        Serial.print(" -*- ");
+        Serial.println(_reqest.currentArgs[i].value);
     }
     Serial.println();
 }
@@ -143,63 +156,150 @@ uint8_t FLProgWebServer::parseGetReqest()
         {
             return FLPROG_WITE;
         }
-        _reqest.reqest = _readingString;
+        _reqestString = _readingString;
         _readingString = "";
         _step = FLPROG_WEB_SERVER_PARSE_GET_STEP_2;
     }
     if (_step == FLPROG_WEB_SERVER_PARSE_GET_STEP_2)
     {
-        result = readStringUntil('\r');
+        result = readStringUntil('\n');
         if (result == FLPROG_WITE)
         {
             return FLPROG_WITE;
         }
         _readingString = "";
-        if (_reqest.reqest == "")
+        if (_reqestString == "")
         {
-            parseArguments(_reqest.searchStr);
+            parseArguments(_searchStr);
             return FLPROG_SUCCESS;
         }
     }
     String headerName;
     String headerValue;
-    int headerDiv = _reqest.reqest.indexOf(':');
+    int headerDiv = _reqestString.indexOf(':');
     if (headerDiv == -1)
     {
-        parseArguments(_reqest.searchStr);
+        parseArguments(_searchStr);
         return FLPROG_SUCCESS;
     }
-    headerName = _reqest.reqest.substring(0, headerDiv);
-    headerValue = _reqest.reqest.substring(headerDiv + 2);
+    headerName = _reqestString.substring(0, headerDiv);
+    headerValue = _reqestString.substring(headerDiv + 2);
     if (headerName.equalsIgnoreCase("Host"))
     {
         _reqest.hostHeader = headerValue;
     }
-    bool hasHeader = false;
-    for (int i = 0; i < _reqest.headerKeysCount; i++)
-    {
-        if (_reqest.headers[i].key.equalsIgnoreCase(headerName))
-        {
-            _reqest.headers[i].value = headerValue;
-            hasHeader = true;
-            break;
-        }
-    }
-    if (!hasHeader)
-    {
-        if (_reqest.headerKeysCount < FLPROG_WEB_SERVER_HEADERS_COUNT)
-        {
-            _reqest.headers[_reqest.headerKeysCount].key = headerName;
-            _reqest.headers[_reqest.headerKeysCount].value = headerValue;
-            _reqest.headerKeysCount++;
-        }
-    }
+    addHeader(headerName, headerValue);
     _step = FLPROG_WEB_SERVER_PARSE_GET_STEP_1;
     return FLPROG_WITE;
 }
 
+void FLProgWebServer::addHeader(String headerName, String headerValue)
+{
+    if (_reqest.headerKeysCount > 0)
+    {
+        FLProgWebServerRequestArgument temp[_reqest.headerKeysCount];
+
+        for (int i = 0; i < _reqest.headerKeysCount; i++)
+        {
+            temp[i].key = _reqest.headers[i].key;
+            temp[i].value = _reqest.headers[i].value;
+        }
+        delete[] _reqest.headers;
+        _reqest.headers = new FLProgWebServerRequestArgument[_reqest.headerKeysCount + 1];
+
+        for (int i = 0; i < _reqest.headerKeysCount; i++)
+        {
+            _reqest.headers[i].key = temp[i].key;
+            _reqest.headers[i].value = temp[i].value;
+        }
+    }
+    else
+    {
+        _reqest.headers = new FLProgWebServerRequestArgument[1];
+    }
+    _reqest.headers[_reqest.headerKeysCount].key = headerName;
+    _reqest.headers[_reqest.headerKeysCount].value = headerValue;
+    _reqest.headerKeysCount++;
+}
+
 void FLProgWebServer::parseArguments(String data)
 {
+    if (_reqest.currentArgs)
+    {
+        delete[] _reqest.currentArgs;
+    }
+    _reqest.currentArgs = 0;
+    if (data.length() == 0)
+    {
+        _reqest.currentArgCount = 0;
+        _reqest.currentArgs = new FLProgWebServerRequestArgument[1];
+        return;
+    }
+    _reqest.currentArgCount = 1;
+    for (int i = 0; i < (int)data.length();)
+    {
+        i = data.indexOf('&', i);
+        if (i == -1)
+            break;
+        ++i;
+        ++_reqest.currentArgCount;
+    }
+    _reqest.currentArgs = new FLProgWebServerRequestArgument[_reqest.currentArgCount + 1];
+    int pos = 0;
+    int iarg;
+    for (iarg = 0; iarg < _reqest.currentArgCount;)
+    {
+        int equal_sign_index = data.indexOf('=', pos);
+        int next_arg_index = data.indexOf('&', pos);
+        if ((equal_sign_index == -1) || ((equal_sign_index > next_arg_index) && (next_arg_index != -1)))
+        {
+            if (next_arg_index == -1)
+                break;
+            pos = next_arg_index + 1;
+            continue;
+        }
+        FLProgWebServerRequestArgument &arg = _reqest.currentArgs[iarg];
+        arg.key = urlDecode(data.substring(pos, equal_sign_index));
+        arg.value = urlDecode(data.substring(equal_sign_index + 1, next_arg_index));
+        ++iarg;
+        if (next_arg_index == -1)
+            break;
+        pos = next_arg_index + 1;
+    }
+    _reqest.currentArgCount = iarg;
+}
+
+String FLProgWebServer::urlDecode(const String &text)
+{
+    String decoded = "";
+    char temp[] = "0x00";
+    unsigned int len = text.length();
+    unsigned int i = 0;
+    while (i < len)
+    {
+        char decodedChar;
+        char encodedChar = text.charAt(i++);
+        if ((encodedChar == '%') && (i + 1 < len))
+        {
+            temp[2] = text.charAt(i++);
+            temp[3] = text.charAt(i++);
+
+            decodedChar = strtol(temp, NULL, 16);
+        }
+        else
+        {
+            if (encodedChar == '+')
+            {
+                decodedChar = ' ';
+            }
+            else
+            {
+                decodedChar = encodedChar; // normal ascii char
+            }
+        }
+        decoded += decodedChar;
+    }
+    return decoded;
 }
 
 uint8_t FLProgWebServer::readStringUntil(char terminator)
@@ -223,4 +323,149 @@ uint8_t FLProgWebServer::readStringUntil(char terminator)
         }
     }
     return FLPROG_WITE;
+}
+
+uint8_t FLProgWebServer::getHttpMethodCode(String method)
+{
+    /* Request Methods */
+    if (method.equalsIgnoreCase("DELETE"))
+    {
+        return FLPROG_WEB_SERVER_DELETE;
+    }
+    if (method.equalsIgnoreCase("GET"))
+    {
+        return FLPROG_WEB_SERVER_GET;
+    }
+    if (method.equalsIgnoreCase("HEAD"))
+    {
+        return FLPROG_WEB_SERVER_HEAD;
+    }
+    if (method.equalsIgnoreCase("POST"))
+    {
+        return FLPROG_WEB_SERVER_POST;
+    }
+    if (method.equalsIgnoreCase("PUT"))
+    {
+        return FLPROG_WEB_SERVER_PUT;
+    }
+    /* pathological */
+    if (method.equalsIgnoreCase("CONNECT"))
+    {
+        return FLPROG_WEB_SERVER_CONNECT;
+    }
+    if (method.equalsIgnoreCase("OPTIONS"))
+    {
+        return FLPROG_WEB_SERVER_OPTIONS;
+    }
+    if (method.equalsIgnoreCase("TRACE"))
+    {
+        return FLPROG_WEB_SERVER_TRACE;
+    }
+    /* WebDAV */
+    if (method.equalsIgnoreCase("COPY"))
+    {
+        return FLPROG_WEB_SERVER_COPY;
+    }
+    if (method.equalsIgnoreCase("LOCK"))
+    {
+        return FLPROG_WEB_SERVER_LOCK;
+    }
+    if (method.equalsIgnoreCase("MKCOL"))
+    {
+        return FLPROG_WEB_SERVER_MKCOL;
+    }
+    if (method.equalsIgnoreCase("MOVE"))
+    {
+        return FLPROG_WEB_SERVER_MOVE;
+    }
+    if (method.equalsIgnoreCase("PROPFIND"))
+    {
+        return FLPROG_WEB_SERVER_PROPFIND;
+    }
+    if (method.equalsIgnoreCase("PROPPATCH"))
+    {
+        return FLPROG_WEB_SERVER_PROPPATCH;
+    }
+    if (method.equalsIgnoreCase("SEARCH"))
+    {
+        return FLPROG_WEB_SERVER_SEARCH;
+    }
+    if (method.equalsIgnoreCase("UNLOCK"))
+    {
+        return FLPROG_WEB_SERVER_UNLOCK;
+    }
+    if (method.equalsIgnoreCase("BIND"))
+    {
+        return FLPROG_WEB_SERVER_BIND;
+    }
+    if (method.equalsIgnoreCase("REBIND"))
+    {
+        return FLPROG_WEB_SERVER_REBIND;
+    }
+    if (method.equalsIgnoreCase("UNBIND"))
+    {
+        return FLPROG_WEB_SERVER_UNBIND;
+    }
+    if (method.equalsIgnoreCase("ACL"))
+    {
+        return FLPROG_WEB_SERVER_ACL;
+    }
+    /* subversion */
+    if (method.equalsIgnoreCase("REPORT"))
+    {
+        return FLPROG_WEB_SERVER_REPORT;
+    }
+    if (method.equalsIgnoreCase("MKACTIVITY"))
+    {
+        return FLPROG_WEB_SERVER_MKACTIVITY;
+    }
+    if (method.equalsIgnoreCase("CHECKOU"))
+    {
+        return FLPROG_WEB_SERVER_CHECKOUT;
+    }
+    if (method.equalsIgnoreCase("MERGE"))
+    {
+        return FLPROG_WEB_SERVER_MERGE;
+    }
+    /* upnp */
+    if (method.equalsIgnoreCase("MSEARCH"))
+    {
+        return FLPROG_WEB_SERVER_MSEARCH;
+    }
+    if (method.equalsIgnoreCase("NOTIFY"))
+    {
+        return FLPROG_WEB_SERVER_NOTIFY;
+    }
+    if (method.equalsIgnoreCase("SUBSCRIBE"))
+    {
+        return FLPROG_WEB_SERVER_SUBSCRIBE;
+    }
+    if (method.equalsIgnoreCase("UNSUBSCRIBE"))
+    {
+        return FLPROG_WEB_SERVER_UNSUBSCRIBE;
+    }
+    /* RFC-5789 */
+    if (method.equalsIgnoreCase("PATCH"))
+    {
+        return FLPROG_WEB_SERVER_PATCH;
+    }
+    if (method.equalsIgnoreCase("PURGE"))
+    {
+        return FLPROG_WEB_SERVER_PURGE;
+    }
+    /* CalDAV */
+    if (method.equalsIgnoreCase("MKCALENDAR"))
+    {
+        return FLPROG_WEB_SERVER_MKCALENDAR;
+    }
+    /* RFC-2068, section 19.6.1.2 */
+    if (method.equalsIgnoreCase("LINK"))
+    {
+        return FLPROG_WEB_SERVER_LINK;
+    }
+    if (method.equalsIgnoreCase("UNLINK"))
+    {
+        return FLPROG_WEB_SERVER_UNLINK;
+    }
+    return FLPROG_WEB_SERVER_GET;
 }
