@@ -7,6 +7,114 @@ FLProgWebServer::FLProgWebServer(FLProgAbstractTcpInterface *sourse, uint16_t po
     _status = FLPROG_READY_STATUS;
 }
 
+void FLProgWebServer::addHandler(String uri, FLProgWebServerCallback callBack, uint8_t method)
+{
+    String newUri;
+    if (uri.length() == 0)
+    {
+        newUri = "/" + uri;
+    }
+    else
+    {
+        newUri = uri;
+    }
+    if (newUri[0] != '/')
+    {
+        newUri = "/" + newUri;
+    }
+
+    if (_handlersCount > 0)
+    {
+        FLProgRequestHandler temp[_handlersCount];
+
+        for (int i = 0; i < _handlersCount; i++)
+        {
+            temp[i] = _handlers[i];
+        }
+        delete[] _handlers;
+        _handlers = new FLProgRequestHandler[_handlersCount + 1];
+
+        for (int i = 0; i < _handlersCount; i++)
+        {
+            _handlers[i] = temp[i];
+        }
+    }
+    else
+    {
+        _handlers = new FLProgRequestHandler[1];
+    }
+    _handlers[_handlersCount].setUri(newUri);
+    _handlers[_handlersCount].setMethod(method);
+    _handlers[_handlersCount].setCallBack(callBack);
+    _handlersCount++;
+}
+
+String FLProgWebServer::headerKeyAtIndex(uint16_t index)
+{
+    if (index >= _reqest.headerKeysCount)
+    {
+        return "";
+    }
+    return _reqest.headers[index].key;
+}
+
+String FLProgWebServer::argumentKeyAtIndex(uint16_t index)
+{
+    if (index >= _reqest.currentArgCount)
+    {
+        return "";
+    }
+    return _reqest.currentArgs[index].key;
+}
+
+bool FLProgWebServer::hasHeaderKey(String key)
+{
+    for (uint16_t i = 0; i < _reqest.headerKeysCount; i++)
+    {
+        if (key.equalsIgnoreCase(_reqest.headers[i].key))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool FLProgWebServer::hasArgumentKey(String key)
+{
+    for (uint16_t i = 0; i < _reqest.currentArgCount; i++)
+    {
+        if (key.equalsIgnoreCase(_reqest.currentArgs[i].key))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+String FLProgWebServer::headerValueAtKey(String key)
+{
+    for (uint16_t i = 0; i < _reqest.headerKeysCount; i++)
+    {
+        if (key.equalsIgnoreCase(_reqest.headers[i].key))
+        {
+            return _reqest.headers[i].value;
+        }
+    }
+    return "";
+}
+
+String FLProgWebServer::argumentValueAtKey(String key)
+{
+    for (uint16_t i = 0; i < _reqest.currentArgCount; i++)
+    {
+        if (key.equalsIgnoreCase(_reqest.currentArgs[i].key))
+        {
+            return _reqest.currentArgs[i].value;
+        }
+    }
+    return "";
+}
+
 void FLProgWebServer::pool()
 {
     if (_server.getSourse() == 0)
@@ -111,39 +219,34 @@ void FLProgWebServer::parseReqest()
             return;
         }
     }
-
     _step = FLPROG_WEB_SERVER_INACTION_STEP;
     _status = FLPROG_READY_STATUS;
-    _server.println("HTTP/1.1 200 OK");
-    _server.println("Content-Type: text/html");
-    _server.println("Connection: close");
-    _server.println();
-    _server.println("<!DOCTYPE HTML>");
-    _server.println("<html>");
-    _server.println("AAAAAAAAAAAAAAAAAAAA");
-    _server.println("</html>");
+    bool hasHandle = false;
+    for (uint16_t i = 0; i < _handlersCount; i++)
+    {
+        if (_handlers[i].canHandle(_reqest.method, _reqest.currentUri))
+        {
+            _handlers[i].handle();
+            hasHandle = true;
+            break;
+        }
+    }
+    if (!hasHandle)
+
+    {
+        if (_callBack_404 == 0)
+        {
+            _server.println("HTTP/1.1 404 Not Found");
+            _server.println("Content-Type: text/html");
+            _server.println("Connection: close");
+            _server.println();
+        }
+        else
+        {
+            _callBack_404();
+        }
+    }
     _server.stopConnection();
-
-    Serial.println(_reqest.currentVersion);
-    Serial.println(_reqest.currentUri);
-    Serial.println(_reqest.method);
-    Serial.println(_reqest.hostHeader);
-
-    for (int i = 0; i < _reqest.headerKeysCount; i++)
-    {
-        Serial.print(_reqest.headers[i].key);
-        Serial.print(" --- ");
-        Serial.println(_reqest.headers[i].value);
-    }
-    Serial.println();
-
-    for (int i = 0; i < _reqest.currentArgCount; i++)
-    {
-        Serial.print(_reqest.currentArgs[i].key);
-        Serial.print(" -*- ");
-        Serial.println(_reqest.currentArgs[i].value);
-    }
-    Serial.println();
 }
 
 uint8_t FLProgWebServer::parseGetReqest()

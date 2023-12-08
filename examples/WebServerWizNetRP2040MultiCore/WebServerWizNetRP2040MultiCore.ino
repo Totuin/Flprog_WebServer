@@ -68,7 +68,9 @@ void setup()
     Serial.print("SPI BUS - ");
     Serial.println(WiznetInterface.spiBus());
     pinMode(LED_BUILTIN, OUTPUT);
-
+}
+void setup1()
+{
     /*
       -----------------------------------------------------------------------------------------
            Настройка интерфейса
@@ -93,6 +95,11 @@ void loop()
 {
     printStatusMessages();
     blinkLed();
+}
+
+void loop1()
+{
+
     WiznetInterface.pool();
     webServer.pool();
 }
