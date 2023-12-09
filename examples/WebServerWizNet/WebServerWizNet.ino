@@ -53,6 +53,13 @@ bool isNeedSendDisconnectMessage = true;
 uint32_t startCicleTime;
 uint32_t maxCicleTime = 0;
 
+const char headerHTML[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n<!DOCTYPE HTML>\r\n<html>";
+const char mainPageHTML[] = "<h1>MainPage</h1><br><a href=\"/test1\">Test page 1</a><br><a href=\"/test2?value1=10&value2=blabla&value3=12345678\">Test page 2</a><br><a href=\"/resetCounter\">Reset max cicle time</a><br>";
+const char resetCounterHTML[] = "<h1>Max cicle time is resetng</h1><br><a href=\"/\">MainPage</a>";
+const char page1HTML[] = "<h1>Test Page 1</h1><br><a href=\"/\">MainPage</a><br><a href=\"/test2?value1=10&value2=blabla&value3=12345678\">Test page 2</a><br>";
+const char page2HTML[] = "<h1>Test Page 2</h1><br><a href = \"/\">MainPage</a><br><a href=\"/test1\">Test page 1</a><br><br>";
+const char page404HTML[] = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n<!DOCTYPE HTML>\r\n<html><h1>Page not found</h1><br><a href = \"/\">MainPage</a><br>";
+
 //=================================================================================================
 void setup()
 {
@@ -87,19 +94,18 @@ void setup()
     webServer.addHandler("/test1", testPage1);
     webServer.addHandler("/test2", testPage2);
     webServer.addHandler("/resetCounter", resetCounter);
-
     webServer.add404Page(page_404);
 }
 
 //=================================================================================================
 void loop()
 {
-    startCicleTime = millis();
+    startCicleTime = micros();
     printStatusMessages();
     blinkLed();
     WiznetInterface.pool();
     webServer.pool();
-    uint32_t diff = flprog::difference32(startCicleTime, millis());
+    uint32_t diff = flprog::difference32(startCicleTime, micros());
     if (diff > maxCicleTime)
     {
         maxCicleTime = diff;
@@ -107,97 +113,58 @@ void loop()
 }
 
 //=================================================================================================
-
 void page_404()
 {
-
-    webServer.println("HTTP/1.1 404 Not Found");
-    webServer.println("Content-Type: text/html");
-    webServer.println("Connection: close");
-    webServer.println();
-    webServer.println("<!DOCTYPE HTML>");
-    webServer.print("<html>");
-    webServer.print("<h1>Page not found</h1>");
-    webServer.print("<br>");
-    sendWebServerData();
-    webServer.print("<h4> Max cicle time - ");
-    webServer.print(maxCicleTime);
-    webServer.print("</h4></html>");
+    webServer.print(page404HTML);
+    sendFooter();
 }
+
 void mainPage()
 {
-    sendHeader();
-    webServer.print("<h1>MainPage</h1>");
-    webServer.print("<br>");
-    webServer.print("<a href=\"/test1\">Test page 1</a>");
-    webServer.print("<br>");
-    webServer.print("<a href=\"/test2?value1=10&value2=blabla&value3=12345678\">Test page 2</a>");
-    webServer.print("<br>");
-    webServer.print("<a href=\"/resetCounter\">Reset max cicle time</a>");
-    webServer.print("<br>");
-    sendWebServerData();
-    webServer.print("<h4> Max cicle time - ");
-    webServer.print(maxCicleTime);
-    webServer.print("</h4></html>");
+    webServer.print(headerHTML);
+    webServer.print(mainPageHTML);
+    sendFooter();
 }
 
 void resetCounter()
 {
     maxCicleTime = 0;
-    sendHeader();
-    webServer.print("<h1>Max cicle time is resetng</h1>");
-    webServer.print("<br>");
-    webServer.print("<a href=\"/\">MainPage</a>");
-    webServer.print("<h4> Max cicle time - ");
-    webServer.print(maxCicleTime);
-    webServer.print("</h4></html>");
+    webServer.print(headerHTML);
+    webServer.print(resetCounterHTML);
+    sendFooter();
 }
 
 void testPage1()
 {
-    sendHeader();
-    webServer.print("<h1>Test Page 1</h1>");
-    webServer.print("<br>");
-    webServer.print("<a href=\"/\">MainPage</a>");
-    webServer.print("<br>");
-    webServer.print("<a href=\"/test2?value1=10&value2=blabla&value3=12345678\">Test page 2</a>");
-    webServer.print("<br>");
-    sendWebServerData();
-    webServer.print("<h4> Max cicle time - ");
-    webServer.print(maxCicleTime);
-    webServer.print("</h4></html>");
+    webServer.print(headerHTML);
+    webServer.print(page1HTML);
+    sendFooter();
 }
 
 void testPage2()
 {
-    sendHeader();
-    webServer.print("<h1>Test Page 2</h1>");
-    webServer.print("<br>");
-    webServer.print(" <a href = \"/\">MainPage</a>");
-    webServer.print("<br>");
-    webServer.print("<a href=\"/test1\">Test page 1</a>");
-    webServer.print("<br>");
-    sendWebServerData();
-    webServer.print("<h4> Max cicle time - ");
-    webServer.print(maxCicleTime);
-    webServer.print("</h4></html>");
+    webServer.print(headerHTML);
+    webServer.print(page2HTML);
+    sendFooter();
 }
 
-void sendHeader()
+void sendFooter()
 {
-    webServer.println("HTTP/1.1 200 OK");
-    webServer.println("Content-Type: text/html");
-    webServer.println("Connection: close");
-    webServer.println();
-    webServer.println("<!DOCTYPE HTML>");
-    webServer.println("<html>");
+    sendWebServerData();
+    sendCounter();
+    webServer.print("</html>");
+}
+
+void sendCounter()
+{
+    webServer.print("<h4> Max cicle time (micros) - ");
+    webServer.print(maxCicleTime);
+    webServer.print("</h4>");
 }
 
 void sendWebServerData()
 {
-    webServer.print("<h2> Server data</h2>");
-    webServer.print("<h3> Main data</h3>");
-    webServer.print("<h4> Method - ");
+    webServer.print("<h2> Server data</h2><h3> Main data</h3><h4> Method - ");
     webServer.print(webServer.method());
     webServer.print("<br> Method version - ");
     webServer.print(webServer.methodVersion());
@@ -205,9 +172,7 @@ void sendWebServerData()
     webServer.print(webServer.host());
     webServer.print("<br> URL - ");
     webServer.print(webServer.uri());
-    webServer.print("</h4>");
-    webServer.print("<h3> Headers </h3>");
-    webServer.print("<h4>");
+    webServer.print("</h4><h3> Headers </h3><h4>");
     for (int i = 0; i < webServer.headersCount(); i++)
     {
         String key = webServer.headerKeyAtIndex(i);
@@ -222,9 +187,7 @@ void sendWebServerData()
             webServer.print("<br>");
         }
     }
-    webServer.print("</h4>");
-    webServer.print("<h3> Arguments </h3>");
-    webServer.print("<h4>");
+    webServer.print("</h4><h3> Arguments </h3><h4>");
     for (int i = 0; i < webServer.argumentsCount(); i++)
     {
         String key = webServer.argumentKeyAtIndex(i);
