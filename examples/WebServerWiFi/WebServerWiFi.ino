@@ -39,8 +39,7 @@ bool isNeedApSendDisconnectMessage = true;
 
 uint32_t startCicleTime;
 uint32_t maxCicleTime = 0;
-uint32_t startCicleTime1;
-uint32_t maxCicleTime1 = 0;
+
 
 const char headerHTML[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n<!DOCTYPE HTML>\r\n<html>";
 const char mainPageHTML[] = "<h1>MainPage</h1><br><a href=\"/test1\">Test page 1</a><br><a href=\"/test2?value1=10&value2=blabla&value3=12345678\">Test page 2</a><br><a href=\"/resetCounter\">Reset max cicle time</a><br>";
