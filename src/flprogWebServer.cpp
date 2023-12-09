@@ -130,6 +130,11 @@ void FLProgWebServer::pool()
         parseReqest();
         return;
     }
+    if (_status == FLPROG_WAIT_WEB_SERVER_SEND_ANSVER)
+    {
+        sendAnswer();
+        return;
+    }
     if (!_server.connected())
     {
         return;
@@ -147,6 +152,7 @@ void FLProgWebServer::parseReqest()
     {
         _startReadStringTime = millis();
         _readingString = "";
+        _writeBufferSize = 0;
         _status = FLPROG_WAIT_WEB_SERVER_READ_REQEST;
         _step = FLPROG_WEB_SERVER_READ_FIRST_LINE_STEP;
     }
@@ -220,33 +226,44 @@ void FLProgWebServer::parseReqest()
         }
     }
     _step = FLPROG_WEB_SERVER_INACTION_STEP;
-    _status = FLPROG_READY_STATUS;
-    bool hasHandle = false;
+    sendAnswer();
+}
+
+void FLProgWebServer::sendAnswer()
+{
+    _status = FLPROG_WAIT_WEB_SERVER_SEND_ANSVER;
     for (uint16_t i = 0; i < _handlersCount; i++)
     {
         if (_handlers[i].canHandle(_reqest.method, _reqest.currentUri))
         {
             _handlers[i].handle();
-            hasHandle = true;
-            break;
+            stopConnection();
+            return;
         }
     }
-    if (!hasHandle)
-
+    if (_callBack_404 == 0)
     {
-        if (_callBack_404 == 0)
-        {
-            _server.println("HTTP/1.1 404 Not Found");
-            _server.println("Content-Type: text/html");
-            _server.println("Connection: close");
-            _server.println();
-        }
-        else
-        {
-            _callBack_404();
-        }
+        sendDefault404Page();
+        stopConnection();
+        return;
     }
+    _callBack_404();
+    stopConnection();
+}
+
+void FLProgWebServer::stopConnection()
+{
+    flush();
     _server.stopConnection();
+    _status = FLPROG_READY_STATUS;
+}
+
+void FLProgWebServer::sendDefault404Page()
+{
+    _server.println("HTTP/1.1 404 Not Found");
+    _server.println("Content-Type: text/html");
+    _server.println("Connection: close");
+    _server.println();
 }
 
 uint8_t FLProgWebServer::parseGetReqest()
@@ -309,7 +326,6 @@ void FLProgWebServer::addHeader(String headerName, String headerValue)
         }
         delete[] _reqest.headers;
         _reqest.headers = new FLProgWebServerRequestArgument[_reqest.headerKeysCount + 1];
-
         for (int i = 0; i < _reqest.headerKeysCount; i++)
         {
             _reqest.headers[i].key = temp[i].key;
@@ -397,7 +413,7 @@ String FLProgWebServer::urlDecode(const String &text)
             }
             else
             {
-                decodedChar = encodedChar; // normal ascii char
+                decodedChar = encodedChar;
             }
         }
         decoded += decodedChar;
@@ -571,4 +587,35 @@ uint8_t FLProgWebServer::getHttpMethodCode(String method)
         return FLPROG_WEB_SERVER_UNLINK;
     }
     return FLPROG_WEB_SERVER_GET;
+}
+
+size_t FLProgWebServer::write(const uint8_t *buf, size_t size)
+{
+    if ((_writeBufferSize + size) >= FLPROG_WRITE_BUFFER_SIZE)
+    {
+        if (_writeBufferSize > 0)
+        {
+            flush();
+        }
+        if (size > FLPROG_WRITE_BUFFER_SIZE)
+        {
+            _server.write(buf, size);
+            return size;
+        }
+    }
+    for (size_t i = 0; i < size; i++)
+    {
+        _writeBuffer[_writeBufferSize] = buf[i];
+        _writeBufferSize++;
+    }
+    return size;
+}
+
+void FLProgWebServer::flush()
+{
+    if (_writeBufferSize > 0)
+    {
+        _server.write(_writeBuffer, _writeBufferSize);
+        _writeBufferSize = 0;
+    }
 }

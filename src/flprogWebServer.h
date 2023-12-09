@@ -68,7 +68,7 @@ public:
     uint8_t getStatus() { return _status; };
     uint8_t getError() { return _errorCode; };
 
-    virtual size_t write(const uint8_t *buf, size_t size) { return _server.write(buf, size); };
+    virtual size_t write(const uint8_t *buf, size_t size);
     virtual size_t write(uint8_t byte) { return _server.write(&byte, 1); };
 
 private:
@@ -79,7 +79,10 @@ private:
     String urlDecode(const String &text);
     void addHeader(String headerName, String headerValue);
     uint8_t getHttpMethodCode(String method);
-    void sendBuffer();
+    void sendAnswer();
+    void stopConnection();
+    void sendDefault404Page();
+    void flush();
 
     uint8_t _errorCode = FLPROG_NOT_ERROR;
     uint8_t _status = FLPROG_NOT_REDY_STATUS;
@@ -93,4 +96,6 @@ private:
     FLProgRequestHandler *_handlers;
     uint16_t _handlersCount = 0;
     FLProgWebServerCallback _callBack_404 = 0;
+    uint16_t _writeBufferSize = 0;
+    uint8_t _writeBuffer[FLPROG_WRITE_BUFFER_SIZE];
 };

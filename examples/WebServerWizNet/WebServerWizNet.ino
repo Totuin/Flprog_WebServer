@@ -50,7 +50,8 @@ uint8_t ethernetError = 255;
 bool isNeedSendConnectMessage = true;
 bool isNeedSendDisconnectMessage = true;
 
-uint32_t startSendTime;
+uint32_t startCicleTime;
+uint32_t maxCicleTime = 0;
 
 //=================================================================================================
 void setup()
@@ -85,158 +86,160 @@ void setup()
     webServer.addHandler("", mainPage);
     webServer.addHandler("/test1", testPage1);
     webServer.addHandler("/test2", testPage2);
+    webServer.addHandler("/resetCounter", resetCounter);
+
     webServer.add404Page(page_404);
 }
 
 //=================================================================================================
 void loop()
 {
+    startCicleTime = millis();
     printStatusMessages();
     blinkLed();
     WiznetInterface.pool();
     webServer.pool();
+    uint32_t diff = flprog::difference32(startCicleTime, millis());
+    if (diff > maxCicleTime)
+    {
+        maxCicleTime = diff;
+    }
 }
 
 //=================================================================================================
 
 void page_404()
 {
-    startSendTime = millis();
-    String result = "HTTP/1.1 404 Not Found";
-    result += "\r\n";
-    result += "Content-Type: text/html";
-    result += "\r\n";
-    result += "Connection: close";
-    result += "\r\n";
-    result += "\r\n";
-    result += "<!DOCTYPE HTML>";
-    result += "\r\n";
-    result += "<html>";
-    result += "<h1>Page not found</h1>";
-    result += "<br>";
-    webServer.print(result);
-    webServer.print(sendWebServerData());
-    result = "<h4> SendTime - ";
-    result += String(millis() - startSendTime);
-    result += "</h4></html>";
-    webServer.print(result);
+
+    webServer.println("HTTP/1.1 404 Not Found");
+    webServer.println("Content-Type: text/html");
+    webServer.println("Connection: close");
+    webServer.println();
+    webServer.println("<!DOCTYPE HTML>");
+    webServer.print("<html>");
+    webServer.print("<h1>Page not found</h1>");
+    webServer.print("<br>");
+    sendWebServerData();
+    webServer.print("<h4> Max cicle time - ");
+    webServer.print(maxCicleTime);
+    webServer.print("</h4></html>");
 }
 void mainPage()
 {
-    startSendTime = millis();
-    webServer.print(sendHeader());
-    String result = "<h1>MainPage</h1>";
-    result += "<br>";
-    result += "<a href=\"/test1\">Test page 1</a>";
-    result += "<br>";
-    result += "<a href=\"/test2?value1=10&value2=blabla&value3=12345678\">Test page 2</a>";
-    result += "<br>";
-    webServer.print(result);
-    webServer.print(sendWebServerData());
-    result = "<h4> SendTime - ";
-    result += String(millis() - startSendTime);
-    result += "</h4></html>";
-    webServer.print(result);
+    sendHeader();
+    webServer.print("<h1>MainPage</h1>");
+    webServer.print("<br>");
+    webServer.print("<a href=\"/test1\">Test page 1</a>");
+    webServer.print("<br>");
+    webServer.print("<a href=\"/test2?value1=10&value2=blabla&value3=12345678\">Test page 2</a>");
+    webServer.print("<br>");
+    webServer.print("<a href=\"/resetCounter\">Reset max cicle time</a>");
+    webServer.print("<br>");
+    sendWebServerData();
+    webServer.print("<h4> Max cicle time - ");
+    webServer.print(maxCicleTime);
+    webServer.print("</h4></html>");
+}
+
+void resetCounter()
+{
+    maxCicleTime = 0;
+    sendHeader();
+    webServer.print("<h1>Max cicle time is resetng</h1>");
+    webServer.print("<br>");
+    webServer.print("<a href=\"/\">MainPage</a>");
+    webServer.print("<h4> Max cicle time - ");
+    webServer.print(maxCicleTime);
+    webServer.print("</h4></html>");
 }
 
 void testPage1()
 {
-    startSendTime = millis();
-    webServer.print(sendHeader());
-    String result = "<h1>Test Page 1</h1>";
-    result += "<br>";
-    result += "<a href=\"/\">MainPage</a>";
-    result += "<br>";
-    result += "<a href=\"/test2?value1=10&value2=blabla&value3=12345678\">Test page 2</a>";
-    webServer.print(result);
-    webServer.print(sendWebServerData());
-    result = "<h4> SendTime - ";
-    result += String(millis() - startSendTime);
-    result += "</h4></html>";
-    webServer.print(result);
+    sendHeader();
+    webServer.print("<h1>Test Page 1</h1>");
+    webServer.print("<br>");
+    webServer.print("<a href=\"/\">MainPage</a>");
+    webServer.print("<br>");
+    webServer.print("<a href=\"/test2?value1=10&value2=blabla&value3=12345678\">Test page 2</a>");
+    webServer.print("<br>");
+    sendWebServerData();
+    webServer.print("<h4> Max cicle time - ");
+    webServer.print(maxCicleTime);
+    webServer.print("</h4></html>");
 }
 
 void testPage2()
 {
-    startSendTime = millis();
-    webServer.print(sendHeader());
-    String result = "<h1>Test Page 2</h1>";
-    result += "<br>";
-    result += " <a href = \"/\">MainPage</a>";
-    result += "<br>";
-    result += "<a href=\"/test1\">Test page 1</a>";
-    webServer.print(result);
-    webServer.print(sendWebServerData());
-    result = "<h4> SendTime - ";
-    result += String(millis() - startSendTime);
-    result += "</h4></html>";
-    webServer.print(result);
+    sendHeader();
+    webServer.print("<h1>Test Page 2</h1>");
+    webServer.print("<br>");
+    webServer.print(" <a href = \"/\">MainPage</a>");
+    webServer.print("<br>");
+    webServer.print("<a href=\"/test1\">Test page 1</a>");
+    webServer.print("<br>");
+    sendWebServerData();
+    webServer.print("<h4> Max cicle time - ");
+    webServer.print(maxCicleTime);
+    webServer.print("</h4></html>");
 }
 
-String sendHeader()
+void sendHeader()
 {
-    String result = "HTTP/1.1 200 OK";
-    result += "\r\n";
-    result += "Content-Type: text/html";
-    result += "\r\n";
-    result += "Connection: close";
-    result += "\r\n";
-    result += "\r\n";
-    result += "<!DOCTYPE HTML>";
-    result += "\r\n";
-    result += "<html>";
-    result += "\r\n";
-    return result;
+    webServer.println("HTTP/1.1 200 OK");
+    webServer.println("Content-Type: text/html");
+    webServer.println("Connection: close");
+    webServer.println();
+    webServer.println("<!DOCTYPE HTML>");
+    webServer.println("<html>");
 }
 
-String sendWebServerData()
+void sendWebServerData()
 {
-    String result = "<h2> Server data</h2>";
-    result += "<h3> Main data</h3>";
-    result += "<h4> Method - ";
-    result += String(webServer.method());
-    result += "<br> Method version - ";
-    result += String(webServer.methodVersion());
-    result += "<br> Host - ";
-    result += webServer.host();
-    result += "<br> URL - ";
-    result += webServer.uri();
-    result += "</h4>";
-    result += "<h3> Headers </h3>";
-    result += "<h4>";
+    webServer.print("<h2> Server data</h2>");
+    webServer.print("<h3> Main data</h3>");
+    webServer.print("<h4> Method - ");
+    webServer.print(webServer.method());
+    webServer.print("<br> Method version - ");
+    webServer.print(webServer.methodVersion());
+    webServer.print("<br> Host - ");
+    webServer.print(webServer.host());
+    webServer.print("<br> URL - ");
+    webServer.print(webServer.uri());
+    webServer.print("</h4>");
+    webServer.print("<h3> Headers </h3>");
+    webServer.print("<h4>");
     for (int i = 0; i < webServer.headersCount(); i++)
     {
         String key = webServer.headerKeyAtIndex(i);
         if (webServer.hasHeaderKey(key))
         {
             String value = webServer.headerValueAtKey(key);
-            result += String(i);
-            result += ": ";
-            result += key;
-            result += " -- ";
-            result += value;
-            result += "<br>";
+            webServer.print(i);
+            webServer.print(": ");
+            webServer.print(key);
+            webServer.print(" -- ");
+            webServer.print(value);
+            webServer.print("<br>");
         }
     }
-    result += "</h4>";
-    result += "<h3> Arguments </h3>";
-    result += "<h4>";
+    webServer.print("</h4>");
+    webServer.print("<h3> Arguments </h3>");
+    webServer.print("<h4>");
     for (int i = 0; i < webServer.argumentsCount(); i++)
     {
         String key = webServer.argumentKeyAtIndex(i);
         if (webServer.hasArgumentKey(key))
         {
             String value = webServer.argumentValueAtKey(key);
-            result += String(i);
-            result += ": ";
-            result += key;
-            result += " = ";
-            result += value;
-            result += "<br>";
+            webServer.print(i);
+            webServer.print(": ");
+            webServer.print(key);
+            webServer.print(" = ");
+            webServer.print(value);
+            webServer.print("<br>");
         }
     }
-    result += "</h4>";
-    return result;
+    webServer.print("</h4>");
 }
 
 void blinkLed()
