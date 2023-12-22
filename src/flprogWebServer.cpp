@@ -160,7 +160,7 @@ void FLProgWebServer::parseReqest()
     if (_step == FLPROG_WEB_SERVER_READ_FIRST_LINE_STEP)
     {
         result = readStringUntil('\r');
-        if (result == FLPROG_WITE)
+        if (result == FLPROG_WAIT)
         {
             return;
         }
@@ -171,7 +171,7 @@ void FLProgWebServer::parseReqest()
     if (_step == FLPROG_WEB_SERVER_READ_SECOND_LINE_STEP)
     {
         result = readStringUntil('\n');
-        if (result == FLPROG_WITE)
+        if (result == FLPROG_WAIT)
         {
             return;
         }
@@ -220,7 +220,7 @@ void FLProgWebServer::parseReqest()
     if ((_step == FLPROG_WEB_SERVER_PARSE_GET_STEP_1) || (_step == FLPROG_WEB_SERVER_PARSE_GET_STEP_2))
     {
         result = parseGetReqest();
-        if (result == FLPROG_WITE)
+        if (result == FLPROG_WAIT)
         {
             return;
         }
@@ -272,9 +272,9 @@ uint8_t FLProgWebServer::parseGetReqest()
     if (_step == FLPROG_WEB_SERVER_PARSE_GET_STEP_1)
     {
         result = readStringUntil('\r');
-        if (result == FLPROG_WITE)
+        if (result == FLPROG_WAIT)
         {
-            return FLPROG_WITE;
+            return FLPROG_WAIT;
         }
         _reqestString = _readingString;
         _readingString = "";
@@ -283,9 +283,9 @@ uint8_t FLProgWebServer::parseGetReqest()
     if (_step == FLPROG_WEB_SERVER_PARSE_GET_STEP_2)
     {
         result = readStringUntil('\n');
-        if (result == FLPROG_WITE)
+        if (result == FLPROG_WAIT)
         {
-            return FLPROG_WITE;
+            return FLPROG_WAIT;
         }
         _readingString = "";
         if (_reqestString == "")
@@ -310,7 +310,7 @@ uint8_t FLProgWebServer::parseGetReqest()
     }
     addHeader(headerName, headerValue);
     _step = FLPROG_WEB_SERVER_PARSE_GET_STEP_1;
-    return FLPROG_WITE;
+    return FLPROG_WAIT;
 }
 
 void FLProgWebServer::addHeader(String headerName, String headerValue)
@@ -441,7 +441,7 @@ uint8_t FLProgWebServer::readStringUntil(char terminator)
             _readingString += (char)readChar;
         }
     }
-    return FLPROG_WITE;
+    return FLPROG_WAIT;
 }
 
 uint8_t FLProgWebServer::getHttpMethodCode(String method)
