@@ -3,8 +3,8 @@
         {
             "name": "Win32",
             "includePath": [
-                "D:/FLProg/ideV8/portable/sketchbook/libraries/Flprog_Ethernet/**",
-                "D:/FLProg/ideV8hardware/arduino/avr/cores/arduino"
+                "${workspaceFolder}/**",
+                "D:/FLProg/ideV8/**"
             ],
             "defines": [
                 "_DEBUG",
