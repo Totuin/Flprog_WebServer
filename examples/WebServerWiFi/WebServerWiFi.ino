@@ -69,7 +69,7 @@ void setup()
   WifiInterface.mac(0x78, 0xAC, 0xC0, 0x2C, 0x30, 0x45);
   // WifiInterface.localIP(IPAddress(192, 168, 199, 38));
   // WifiInterface.resetDhcp();
-  WifiInterface.setClientSsidd("totuin-router");
+  WifiInterface.setClientSsid("totuin-router");
   WifiInterface.setClientPassword("12345678");
   /*
     -----------------------------------------------------------------------------------------
