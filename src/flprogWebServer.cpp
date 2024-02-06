@@ -46,6 +46,7 @@ void FLProgWebServer::addHandler(String uri, FLProgWebServerCallback callBack, u
     _handlers[_handlersCount].setUri(newUri);
     _handlers[_handlersCount].setMethod(method);
     _handlers[_handlersCount].setCallBack(callBack);
+    _handlers[_handlersCount].setServer(this);
     _handlersCount++;
 }
 
@@ -247,7 +248,7 @@ void FLProgWebServer::sendAnswer()
         stopConnection();
         return;
     }
-    _callBack_404();
+    _callBack_404(this);
     stopConnection();
 }
 

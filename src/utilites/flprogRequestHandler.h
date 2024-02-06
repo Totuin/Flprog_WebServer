@@ -44,13 +44,16 @@
 #define FLPROG_WEB_SERVER_LINK 31
 #define FLPROG_WEB_SERVER_UNLINK 33
 
-typedef void (*FLProgWebServerCallback)(void);
+class FLProgWebServer;
+
+typedef void (*FLProgWebServerCallback)(FLProgWebServer *);
 
 class FLProgRequestHandler
 {
 public:
     FLProgRequestHandler(){};
-    
+
+    void setServer(FLProgWebServer *server) { _server = server; };
     void setMethod(uint8_t method) { _method = method; };
     void setUri(String uri) { _uri = uri; };
     void setCallBack(FLProgWebServerCallback func) { _callBack = func; };
@@ -60,6 +63,7 @@ public:
 
 private:
     FLProgWebServerCallback _callBack = 0;
+    FLProgWebServer *_server;
     uint8_t _method = FLPROG_WEB_SERVER_GET;
     String _uri = "/";
 };

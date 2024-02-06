@@ -128,100 +128,100 @@ void loop1()
 }
 
 //=================================================================================================
-void page_404()
+void page_404(FLProgWebServer *server)
 {
-    webServer.print(page404HTML);
-    sendFooter();
+    server->print(page404HTML);
+    sendFooter(server);
 }
 
-void mainPage()
+void mainPage(FLProgWebServer *server)
 {
-    webServer.print(headerHTML);
-    webServer.print(mainPageHTML);
-    sendFooter();
+    server->print(headerHTML);
+    server->print(mainPageHTML);
+    sendFooter(server);
 }
 
-void resetCounter()
+void resetCounter(FLProgWebServer *server)
 {
     maxCicleTime = 0;
     maxCicleTime1 = 0;
-    webServer.print(headerHTML);
-    webServer.print(resetCounterHTML);
-    sendFooter();
+    server->print(headerHTML);
+    server->print(resetCounterHTML);
+    sendFooter(server);
 }
 
-void testPage1()
+void testPage1(FLProgWebServer *server)
 {
-    webServer.print(headerHTML);
-    webServer.print(page1HTML);
-    sendFooter();
+    server->print(headerHTML);
+    server->print(page1HTML);
+    sendFooter(server);
 }
 
-void testPage2()
+void testPage2(FLProgWebServer *server)
 {
-    webServer.print(headerHTML);
-    webServer.print(page2HTML);
-    sendFooter();
+    server->print(headerHTML);
+    server->print(page2HTML);
+    sendFooter(server);
 }
 
-void sendFooter()
+void sendFooter(FLProgWebServer *server)
 {
-    sendWebServerData();
-    sendCounter();
-    webServer.print("</html>");
+    sendWebServerData(server);
+    sendCounter(server);
+    server->print("</html>");
 }
 
-void sendCounter()
+void sendCounter(FLProgWebServer *server)
 {
-    webServer.print("<h4> Max cicle time (micros) - ");
-    webServer.print(maxCicleTime);
-    webServer.print("<br>");
-    webServer.print(" Max cicle time (micros) 1 - ");
-    webServer.print(maxCicleTime1);
-    webServer.print("</h4>");
+    server->print("<h4> Max cicle time (micros) - ");
+    server->print(maxCicleTime);
+    server->print("<br>");
+    server->print(" Max cicle time (micros) 1 - ");
+    server->print(maxCicleTime1);
+    server->print("</h4>");
 }
 
-void sendWebServerData()
+void sendWebServerData(FLProgWebServer *server)
 {
-    webServer.print("<h2> Server data</h2><h3> Main data</h3><h4> Method - ");
-    webServer.print(webServer.method());
-    webServer.print("<br> Method version - ");
-    webServer.print(webServer.methodVersion());
-    webServer.print("<br> Host - ");
-    webServer.print(webServer.host());
-    webServer.print("<br> URL - ");
-    webServer.print(webServer.uri());
-    webServer.print("</h4><h3> Headers </h3><h4>");
-    for (int i = 0; i < webServer.headersCount(); i++)
+    server->print("<h2> Server data</h2><h3> Main data</h3><h4> Method - ");
+    server->print(server->method());
+    server->print("<br> Method version - ");
+    server->print(server->methodVersion());
+    server->print("<br> Host - ");
+    server->print(server->host());
+    server->print("<br> URL - ");
+    server->print(server->uri());
+    server->print("</h4><h3> Headers </h3><h4>");
+    for (int i = 0; i < server->headersCount(); i++)
     {
-        String key = webServer.headerKeyAtIndex(i);
-        if (webServer.hasHeaderKey(key))
+        String key = server->headerKeyAtIndex(i);
+        if (server->hasHeaderKey(key))
         {
-            String value = webServer.headerValueAtKey(key);
-            webServer.print(i);
-            webServer.print(": ");
-            webServer.print(key);
-            webServer.print(" -- ");
-            webServer.print(value);
-            webServer.print("<br>");
+            String value = server->headerValueAtKey(key);
+            server->print(i);
+            server->print(": ");
+            server->print(key);
+            server->print(" -- ");
+            server->print(value);
+            server->print("<br>");
         }
     }
-    webServer.print("</h4><h3> Arguments </h3><h4>");
-    for (int i = 0; i < webServer.argumentsCount(); i++)
+    server->print("</h4><h3> Arguments </h3><h4>");
+    for (int i = 0; i < server->argumentsCount(); i++)
     {
-        String key = webServer.argumentKeyAtIndex(i);
-        if (webServer.hasArgumentKey(key))
+        String key = server->argumentKeyAtIndex(i);
+        if (server->hasArgumentKey(key))
         {
-            String value = webServer.argumentValueAtKey(key);
-            webServer.print(i);
-            webServer.print(": ");
-            webServer.print(key);
-            webServer.print(" = ");
-            webServer.print(value);
-            webServer.print("<br>");
+            String value = server->argumentValueAtKey(key);
+            server->print(i);
+            server->print(": ");
+            server->print(key);
+            server->print(" = ");
+            server->print(value);
+            server->print("<br>");
         }
     }
-    webServer.print("</h4>");
+    server->print("</h4>");
 }
 
 void blinkLed()

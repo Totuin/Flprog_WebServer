@@ -23,5 +23,5 @@ void FLProgRequestHandler::handle()
     {
         return;
     }
-    _callBack();
+    _callBack(_server);
 }
