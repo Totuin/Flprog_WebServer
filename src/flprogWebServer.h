@@ -68,6 +68,10 @@ public:
     uint8_t getStatus() { return _status; };
     uint8_t getError() { return _errorCode; };
 
+    void sendDefault200Page();
+    void sendDefault404Page();
+    void sendJson(String value);
+
     virtual size_t write(const uint8_t *buf, size_t size);
     virtual size_t write(uint8_t byte) { return _server.write(&byte, 1); };
 
@@ -81,7 +85,7 @@ private:
     uint8_t getHttpMethodCode(String method);
     void sendAnswer();
     void stopConnection();
-    void sendDefault404Page();
+
     void flush();
 
     uint8_t _errorCode = FLPROG_NOT_ERROR;

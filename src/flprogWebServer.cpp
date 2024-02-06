@@ -267,6 +267,23 @@ void FLProgWebServer::sendDefault404Page()
     _server.println();
 }
 
+void FLProgWebServer::sendDefault200Page()
+{
+    _server.println("HTTP/1.1 200 OK");
+    _server.println("Content-Type: text/html");
+    _server.println("Connection: close");
+    _server.println();
+}
+
+void FLProgWebServer::sendJson(String value)
+{
+    _server.println("HTTP/1.1 200 OK");
+    _server.println("Content-Type: text/json");
+    _server.println("Connection: close");
+    _server.println(value);
+    _server.println();
+}
+
 uint8_t FLProgWebServer::parseGetReqest()
 {
     uint8_t result;
