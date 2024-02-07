@@ -284,6 +284,15 @@ void FLProgWebServer::sendJson(String value)
     _server.println();
 }
 
+void FLProgWebServer::send403Page(String value)
+{
+    _server.println("HTTP/1.1 403 Forbidden");
+    _server.println("Content-Type: text/htm");
+    _server.println("Connection: close");
+    _server.println(value);
+    _server.println();
+}
+
 uint8_t FLProgWebServer::parseGetReqest()
 {
     uint8_t result;

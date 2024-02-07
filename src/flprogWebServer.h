@@ -70,6 +70,7 @@ public:
 
     void sendDefault200Page();
     void sendDefault404Page();
+    void send403Page(String value);
     void sendJson(String value);
 
     virtual size_t write(const uint8_t *buf, size_t size);
