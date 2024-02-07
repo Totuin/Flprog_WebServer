@@ -280,7 +280,8 @@ void FLProgWebServer::sendJson(String value)
     _server.println("HTTP/1.1 200 OK");
     _server.println("Content-Type: text/json");
     _server.println("Connection: close");
-    _server.println(value);
+    _server.println();
+    _server.print(value);
     _server.println();
 }
 
