@@ -28,8 +28,13 @@ host	KEYWORD2
 method	KEYWORD2
 methodVersion	KEYWORD2
 pool	KEYWORD2
+send403Page	KEYWORD2
+sendDefault200Page	KEYWORD2
+sendDefault404Page	KEYWORD2
+sendJson	KEYWORD2
 setCallBack	KEYWORD2
 setMethod	KEYWORD2
+setServer	KEYWORD2
 setUri	KEYWORD2
 uri	KEYWORD2
 write	KEYWORD2
