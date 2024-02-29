@@ -4,7 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "D:/FLProg/ideV8/**"
+                "D:/FLProg/ideV8/**",
+                "F:/FLProg/ideV8/**"
             ],
             "defines": [
                 "_DEBUG",
