@@ -118,6 +118,12 @@ String FLProgWebServer::argumentValueAtKey(String key)
 
 void FLProgWebServer::pool()
 {
+    if (_eventsCount < _skippingEvents)
+    {
+        _eventsCount++;
+        return;
+    }
+    _eventsCount = 0;
     if (_server.getSourse() == 0)
     {
         return;

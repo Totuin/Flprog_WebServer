@@ -17,6 +17,7 @@ argumentValueAtKey	KEYWORD2
 argumentsCount	KEYWORD2
 canHandle	KEYWORD2
 getError	KEYWORD2
+getSkippingEvents	KEYWORD2
 getStatus	KEYWORD2
 handle	KEYWORD2
 hasArgumentKey	KEYWORD2
@@ -35,6 +36,7 @@ sendJson	KEYWORD2
 setCallBack	KEYWORD2
 setMethod	KEYWORD2
 setServer	KEYWORD2
+setSkippingEvents	KEYWORD2
 setUri	KEYWORD2
 uri	KEYWORD2
 write	KEYWORD2

@@ -76,6 +76,9 @@ public:
     virtual size_t write(const uint8_t *buf, size_t size);
     virtual size_t write(uint8_t byte) { return _server.write(&byte, 1); };
 
+    uint16_t getSkippingEvents() { return _skippingEvents; };
+    void setSkippingEvents(uint16_t value) { _skippingEvents = value; };
+
 private:
     void parseReqest();
     uint8_t readStringUntil(char terminator);
@@ -103,4 +106,6 @@ private:
     FLProgWebServerCallback _callBack_404 = 0;
     uint16_t _writeBufferSize = 0;
     uint8_t _writeBuffer[FLPROG_WRITE_BUFFER_SIZE];
+    uint16_t _skippingEvents = 0;
+    uint16_t _eventsCount = 0;
 };
